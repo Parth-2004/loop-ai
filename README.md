@@ -84,10 +84,18 @@ Interactive API docs are served at **`/api/docs`**.
 `APP_URL` is detected from Render's `RENDER_EXTERNAL_URL`. If you add a custom domain, set `APP_URL` to it.
 Every push to the default branch redeploys automatically.
 
-**Plans and cost.** The blueprint uses the `starter` web plan and the `basic-256mb` database, both paid. The scheduler
-runs inside the web process, and free web instances sleep after 15 minutes idle, which would make scheduled posts
-late. To try it for free, change `plan: starter` to `plan: free` and the database plan to `free` in `render.yaml`
-(Render deletes free databases after 30 days). Keep a single instance, because the scheduler is in-process.
+**Plans and cost.** The blueprint deploys on Render's **free** plans, so it costs nothing. Two limits to know:
+
+- **The free web service sleeps** after 15 minutes without traffic, and the scheduler sleeps with it, so drafts and
+  posts would wait until someone opens the site (the first visit after a sleep takes about a minute). To keep it awake,
+  have a free uptime monitor such as [UptimeRobot](https://uptimerobot.com) or [cron-job.org](https://cron-job.org)
+  request `https://YOUR-APP.onrender.com/api/health` every 10 minutes. One always-on service fits within the free
+  monthly instance hours.
+- **The free database expires 30 days** after it is created; Render emails you before that. To keep your data, upgrade
+  it to `basic-256mb` in the Render dashboard (or in `render.yaml`). Render allows one free database per workspace.
+
+For an always-on paid setup, change the web plan to `starter` and the database plan to `basic-256mb` in `render.yaml`.
+Keep a single instance either way, because the scheduler runs in-process.
 
 **Email on Render.** Render may block outbound SMTP, so use **Resend**. Verify your sending domain there and set
 `EMAIL_FROM` to an address on it. Without an email provider, approval emails, including the review link, are
