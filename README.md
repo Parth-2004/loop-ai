@@ -7,7 +7,7 @@ Loop AI learns how you or your company write, then creates posts with images and
 Nothing is published until you approve it by email. Reply with changes and the AI rewrites the post and sends you
 a new version.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/D-A-R-K-999/loop-ai)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Parth-2004/loop-ai)
 
 ```
  Schedule slot ──> Gemini drafts copy per platform + an image (Gemini / Imagen) or a video (Veo)
