@@ -1,0 +1,161 @@
+/* =====================================================================
+   App — interaction layer (same language as the landing page)
+   ===================================================================== */
+
+/* Same aurora as the landing hero, fixed behind every app page */
+.app-bg .aurora { position: absolute; inset: 0; opacity: 0.78; }
+.app-bg .aurora .horizon { opacity: 0.7; }
+.app-bg::before { /* keep long pages readable: soft night vignette over the light */
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: radial-gradient(120% 90% at 60% 40%, transparent 30%, rgba(8, 7, 15, 0.55) 100%);
+}
+.app-bg::after { z-index: 2; }
+
+/* Icons */
+.icon { display: inline-block; vertical-align: middle; flex: none; }
+.nav-ico { display: inline-grid; place-items: center; width: 22px; }
+.sidebar .btn .icon { opacity: 0.8; }
+
+/* ---------- Buttons: magnetic lean + light sweep + ripple ---------- */
+.btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--s, 1));
+  transition: transform 0.45s var(--e-ui), background 0.25s, box-shadow 0.3s var(--e-ui), border-color 0.25s, opacity 0.2s;
+}
+.btn:hover { --s: 1.03; transform: translate3d(var(--tx, 0px), calc(var(--ty, 0px) - 1px), 0) scale(var(--s)); }
+.btn:active { --s: 0.96; }
+.btn:disabled { --s: 1; transform: none; }
+.btn::after {
+  content: ''; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.22) 48%, transparent 66%);
+  transform: translateX(-130%); transition: transform 0.8s var(--e-ui);
+}
+.btn.primary::after, .btn.success::after { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.5) 48%, transparent 66%); }
+.btn:hover:not(:disabled)::after { transform: translateX(130%); }
+.btn.primary { background: linear-gradient(135deg, #a78bfa, #7c3aed 55%, #c026d3); background-size: 200% 200%; animation: gradShift 7s ease-in-out infinite; }
+@keyframes gradShift { 50% { background-position: 100% 50%; } }
+.btn .icon { transition: transform 0.35s var(--e-ui); }
+.btn:hover .icon { transform: translateX(2px); }
+.ripple { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(255, 255, 255, 0.3); transform: scale(0); animation: ripple 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; z-index: 0; }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+/* ---------- Cards: tilt + depth on hover ---------- */
+.card[data-tilt]:hover { border-color: rgba(167, 139, 250, 0.35); box-shadow: var(--shadow), 0 30px 70px rgba(76, 29, 149, 0.32); }
+a.card:hover, .card.lift:hover, .post-card:hover { transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, -4px)); }
+
+/* Stat cards: icon tile pops out of the glass, number lifts */
+.stat .stat-ico { transition: transform 0.5s var(--e-big), box-shadow 0.4s; transform: translateZ(0); }
+.stat:hover .stat-ico { transform: translateZ(36px) rotate(-8deg) scale(1.1); box-shadow: 0 12px 30px var(--tint-soft, var(--primary-soft)), 0 0 30px var(--tint-soft, var(--primary-soft)); }
+.stat .num { transition: transform 0.5s var(--e-ui); }
+.stat:hover .num { transform: translateZ(24px); }
+
+/* Post cards: thumbnail zooms, title slides */
+.thumb img, .thumb video { transition: transform 0.7s var(--e-ui); }
+.post-card:hover .thumb img, .post-card:hover .thumb video { transform: scale(1.08); }
+.post-card .title { transition: color 0.3s, transform 0.4s var(--e-ui); }
+.post-card:hover .title { color: #e2d9ff; transform: translateX(3px); }
+
+/* Provider cards: platform tile glows in its own colour */
+.provider-head .plat { transition: transform 0.5s var(--e-big), box-shadow 0.4s; }
+.provider:hover .provider-head .plat { transform: translateZ(30px) rotate(-6deg) scale(1.06); box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 30px var(--accent-line, var(--primary-2)); }
+
+/* Sidebar */
+.nav-link .nav-ico .icon { transition: transform 0.4s var(--e-big); }
+.nav-link:hover .nav-ico .icon { transform: scale(1.12) rotate(-8deg); }
+.nav-link.active .nav-ico { color: #fff; filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8)); }
+.brand-mark { transition: transform 0.5s var(--e-big); }
+.brand:hover .brand-mark { transform: rotate(-14deg) scale(1.06); }
+.brand:hover .brand-ring { animation-duration: 0.9s; }
+
+/* Tabs and chips */
+.tab { position: relative; }
+.tab:not(.on):hover { background: rgba(255, 255, 255, 0.05); }
+.choice { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); }
+.choice:hover { --lift: -3px; }
+
+/* Empty states */
+.empty .big { color: var(--primary-2); filter: drop-shadow(0 0 18px rgba(139, 92, 246, 0.5)); }
+
+/* Page title: soft light sweeps across once on entry */
+.page-head h1 {
+  background: linear-gradient(100deg, #f3f1ff 40%, #c4b5fd 50%, #f3f1ff 60%);
+  background-size: 250% 100%; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: titleSweep 1.8s var(--e-ui) 0.3s both;
+  padding-right: 0.08em; /* italic overhang */
+}
+@keyframes titleSweep { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+
+/* Reduced motion (explicit off) */
+:root[data-motion='reduced'] .app-bg .blob,
+:root[data-motion='reduced'] .btn.primary,
+:root[data-motion='reduced'] .page-head h1 { animation: none !important; }
+:root[data-motion='reduced'] .page-head h1 { background-position: 0 0; }
+
+
+/* ---------- Performance: smooth scrolling in the app ---------- */
+/* The aurora under the app is already soft, so live backdrop blur adds cost but no visible change. */
+.card, .sidebar { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.card { background:
+    radial-gradient(520px circle at var(--mx, -999px) var(--my, -999px), rgba(167, 139, 250, 0.11), transparent 42%),
+    linear-gradient(180deg, rgba(22, 18, 40, 0.72), rgba(14, 12, 28, 0.62)); }
+.sidebar { background: linear-gradient(180deg, rgba(20, 16, 38, 0.82), rgba(12, 10, 24, 0.78)); }
+.app-bg::after { mix-blend-mode: normal !important; opacity: 0.05 !important; }
+.btn.primary { animation: none; }
+.btn.primary:hover { animation: gradShift 2.4s ease-in-out infinite; }
+.card[data-tilt] { will-change: auto; }
+
+/* ---------- Dashboard welcome banner with the glass-ring footage ---------- */
+.hero-banner { position: relative; overflow: hidden; padding: 40px 44px; min-height: 230px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 26px; isolation: isolate; }
+.hero-banner .bg-video { position: absolute; inset: 0 0 0 auto; width: 68%; height: 100%; object-fit: cover; object-position: 70% 55%; z-index: -1;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%); mask-image: linear-gradient(90deg, transparent 0%, #000 45%); }
+.hero-banner::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(12, 10, 24, 0.92) 30%, rgba(12, 10, 24, 0.2) 75%, rgba(12, 10, 24, 0.45)); }
+.hero-banner h1 { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(40px, 4.4vw, 60px); line-height: 1; letter-spacing: -0.025em; margin: 0 0 12px;
+  background: linear-gradient(100deg, #f3f1ff 40%, #c4b5fd 50%, #f3f1ff 60%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: titleSweep 1.8s var(--e-ui) 0.3s both; padding-right: 0.08em; }
+.hero-banner .subtitle { max-width: 46ch; }
+.hero-banner .row { margin-top: 22px; }
+@media (max-width: 700px) { .hero-banner { padding: 28px 22px; } .hero-banner .bg-video { width: 100%; opacity: 0.55; } }
+
+
+/* ---------- Brand logos & platform tiles ---------- */
+.plat { --logo: 14px; }
+.plat .brand-logo { width: var(--logo); height: var(--logo); display: block; }
+.plat.x .brand-logo { width: calc(var(--logo) * 0.9); height: calc(var(--logo) * 0.9); }
+.plat.instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.plat-duo { --duo: 52px; position: relative; display: inline-block; width: var(--duo); height: var(--duo); flex: none; }
+.plat-duo .plat { position: absolute; border-radius: 30%; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 2px #0e0c1c; }
+.plat-duo .plat:first-child { left: 0; top: 0; }
+.plat-duo .plat:last-child { right: 0; bottom: 0; }
+
+/* Accounts: identical card anatomy — tile + two-line copy block, badges on one baseline */
+.provider-head { align-items: start; grid-template-columns: 52px 1fr; }
+.provider-head .plat { --logo: 26px; }
+.provider-head p { min-height: calc(1.5em * 2); }
+.provider[data-tilt]:hover { --lift: -3px; }
+.provider .provider-head h2 { line-height: 1.2; }
+
+/* Icons inside buttons and choice cards */
+.btn .icon, .choice .icon { flex: none; }
+.choice .t { display: flex; align-items: center; gap: 10px; }
+.choice-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--primary-2); transition: transform 0.45s var(--e-big), background 0.3s, color 0.3s; }
+.choice.on .choice-ico { background: linear-gradient(180deg, #9a6cff, #7c3aed); color: #fff; border-color: transparent; box-shadow: 0 8px 22px var(--primary-glow); }
+.choice:hover .choice-ico { transform: rotate(-8deg) scale(1.06); }
+.vlist-title { display: flex; align-items: center; gap: 8px; }
+.vlist-title .icon { color: var(--green); }
+.vlist-title.dont .icon { color: var(--red); }
+.status-line { display: inline-flex; align-items: center; gap: 8px; }
+.status-line .ok { color: var(--green); }
+.status-line .bad { color: var(--red); }
+.status-line .warn { color: var(--amber); }
+.step .n .icon { display: block; }
+
+.provider-head .plat-duo { --duo: 52px; }
+.provider-head .plat-duo .plat { width: 36px; height: 36px; border-radius: 11px; --logo: 19px; }
+
+/* Cards in a grid share one row: the stacked-card spacing must not push siblings down */
+.grid > .card + .card, .grid > * + .card { margin-top: 0; }
+/* Accounts: header block has one fixed height so every card's badge/button sits on the same line */
+.provider-head { min-height: 116px; }
+.provider-foot { margin-top: 0; }
+.env-keys { display: flex; flex-wrap: wrap; gap: 8px; }
+.provider .env { white-space: nowrap; padding: 6px 10px; }

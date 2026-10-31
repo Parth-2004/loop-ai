@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+*.db
+*.db-*
+*.db.bak*
+__pycache__
+.hallmark
+.claude
+client/node_modules
+client/dist
+# the full-size source clips; the site ships the compressed *-web.mp4 versions
+client/public/video/hero.mp4
+client/public/video/cta.mp4

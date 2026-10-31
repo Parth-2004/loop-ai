@@ -1,0 +1,300 @@
+/* =====================================================================
+   Landing — interaction & scroll layer (loaded after landing.css)
+   ===================================================================== */
+
+/* Scroll progress */
+.l-progress { position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 80; pointer-events: none; }
+.l-progress i { display: block; height: 100%; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, #8b5cf6, #ec4899, #f59e0b); box-shadow: 0 0 12px rgba(236, 72, 153, 0.6); }
+
+/* Optional footage (BgVideo) — sits under the aurora, which tints it */
+.bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.l-hero-video { z-index: -3; filter: saturate(1.1) brightness(0.75); }
+.l-cta-video { z-index: -2; opacity: 0.8; }
+
+/* ---------- Glass reacts to the cursor ---------- */
+.landing .glass {
+  background:
+    radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), rgba(255, 255, 255, 0.13), transparent 62%),
+    rgba(255, 255, 255, 0.035);
+  transition: box-shadow 0.4s var(--e-ui);
+}
+.landing .glass:hover { box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), 0 18px 50px rgba(76, 29, 149, 0.35); }
+
+/* ---------- 3D tilt (driven by interactions.js) ---------- */
+[data-tilt] {
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transform-style: preserve-3d;
+  transition: transform 0.6s var(--e-ui), box-shadow 0.4s var(--e-ui);
+  will-change: transform;
+}
+[data-tilt]:hover { --lift: -6px; transition: transform 0.15s linear, box-shadow 0.4s var(--e-ui); }
+
+/* ---------- Buttons: magnetic + light sweep + ripple ---------- */
+.l-btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--s, 1));
+  transition: transform 0.45s var(--e-ui), box-shadow 0.3s var(--e-ui), background 0.3s;
+}
+.l-btn:hover { --s: 1.04; transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--s)); }
+.l-btn:active { --s: 0.97; }
+.l-btn::after {
+  content: ''; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  transform: translateX(-130%); transition: transform 0.8s var(--e-ui);
+}
+.l-btn-white::after { background: linear-gradient(115deg, transparent 30%, rgba(139, 92, 246, 0.28) 48%, transparent 66%); }
+.l-btn:hover::after { transform: translateX(130%); }
+.l-btn svg { transition: transform 0.35s var(--e-ui); }
+.l-btn:hover svg { transform: translate(3px, -3px); }
+.l-btn-accent { background: linear-gradient(135deg, #a78bfa, #7c3aed 55%, #db2777); background-size: 200% 200%; animation: gradShift 6s ease-in-out infinite; }
+@keyframes gradShift { 50% { background-position: 100% 50%; } }
+.ripple { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(255, 255, 255, 0.35); transform: scale(0); animation: ripple 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; z-index: 0; }
+.l-btn-white .ripple { background: rgba(124, 58, 237, 0.25); }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+/* Nav links: sliding underline */
+.l-nav-pill > a:not(.l-btn) { position: relative; }
+.l-nav-pill > a:not(.l-btn)::after {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: 4px; height: 1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, #a78bfa, #f0abfc); transform: scaleX(0); transition: transform 0.4s var(--e-big);
+}
+.l-nav-pill > a:not(.l-btn):hover::after { transform: scaleX(1); }
+.l-logo:hover .l-logo-ring, .l-foot-logo:hover .l-logo-ring { animation-duration: 0.9s; }
+.l-logo { transition: transform 0.4s var(--e-ui); }
+.l-logo:hover { transform: rotate(-12deg) scale(1.06); }
+
+/* "See the loop" play ring */
+.l-play { position: relative; transition: transform 0.35s var(--e-ui), background 0.3s; }
+.l-play::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.5); opacity: 0; }
+.l-textlink:hover .l-play { transform: scale(1.12); background: rgba(255, 255, 255, 0.12); }
+.l-textlink:hover .l-play::after { animation: ping 1.2s var(--e-ui) infinite; }
+@keyframes ping { from { opacity: 0.8; transform: scale(1); } to { opacity: 0; transform: scale(1.8); } }
+
+/* Badge shimmer */
+.l-badge { overflow: hidden; }
+.l-badge::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%); transform: translateX(-120%); animation: badgeSweep 5s ease-in-out 2.4s infinite; }
+@keyframes badgeSweep { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+
+/* Hero stats: number lifts toward you */
+.l-stat-num { transition: transform 0.5s var(--e-ui), color 0.3s; transform: translateZ(0); }
+.l-stat:hover .l-stat-num { transform: translateZ(30px); color: #e9e2ff; }
+
+/* ---------- Platform strip (driven by useScrollFx; no CSS animation) ---------- */
+.l-marquee-track { animation: none !important; will-change: transform; }
+.l-mchip { transition: color 0.3s, background 0.35s, transform 0.4s var(--e-ui), border-color 0.3s; }
+.l-mchip:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.3); color: #fff; }
+.l-mchip b { transition: transform 0.4s var(--e-ui), background 0.3s; }
+.l-mchip:hover b { transform: rotate(-10deg) scale(1.1); }
+.l-mchip.x:hover b { background: #000; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+.l-mchip.linkedin:hover b { background: #0a66c2; }
+.l-mchip.instagram:hover b { background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af); }
+.l-mchip.facebook:hover b { background: #1877f2; }
+.l-mchip.inbox:hover b, .l-mchip.gemini:hover b { background: #7c3aed; }
+.l-mchip b .icon { display: block; }
+
+/* ---------- Steps timeline that draws with scroll ---------- */
+.l-steps { position: relative; border-top: 0; }
+.l-steps-line { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: rgba(255, 255, 255, 0.12); }
+.l-steps-line i { position: absolute; left: 0; right: 0; top: -0.5px; height: 2px; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); background: linear-gradient(90deg, #a78bfa, #ec4899); box-shadow: 0 0 14px rgba(167, 139, 250, 0.7); }
+.l-step::after { content: ''; position: absolute; top: -5px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: #2a2540; border: 1px solid rgba(255, 255, 255, 0.25); transition: all 0.5s var(--e-big); }
+.l-step + .l-step::after { left: 26px; }
+.l-step.lit::after { background: #fff; border-color: #fff; box-shadow: 0 0 0 5px rgba(167, 139, 250, 0.25), 0 0 18px #a78bfa; transform: scale(1.15); }
+.l-step h3, .l-step p { transition: color 0.5s, opacity 0.5s, transform 0.6s var(--e-ui); }
+.l-step:not(.lit) h3 { color: rgba(255, 255, 255, 0.45); }
+.l-step:not(.lit) p { opacity: 0.55; }
+.l-step.lit h3 { transform: translateX(4px); }
+.l-step.mine::before { display: none; }
+.l-step.mine.lit h3 { color: #d8ccff; }
+
+/* ---------- Inbox card: swings into place with scroll, tilts under the cursor ---------- */
+.l-mail, .l-mail.in {
+  transform: perspective(1200px) translateY(var(--mail-y, 0px)) rotate(var(--mail-r, -1.2deg)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.25s linear, box-shadow 0.4s;
+}
+.l-mail:hover { box-shadow: 0 50px 140px rgba(91, 33, 182, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.l-mbtn { cursor: default; transition: transform 0.3s var(--e-ui), box-shadow 0.3s; }
+.l-mbtn:hover { transform: translateY(-2px); }
+.l-mbtn.ok:hover { box-shadow: 0 8px 22px rgba(22, 163, 74, 0.45); }
+.l-mbtn.edit:hover { box-shadow: 0 8px 22px rgba(109, 40, 217, 0.45); }
+.l-mail-visual { overflow: hidden; }
+.l-mail-visual::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 70% 35%, #fde68a, transparent 45%); animation: sunDrift 7s ease-in-out infinite alternate; opacity: 0.7; }
+@keyframes sunDrift { to { transform: translate(-12%, 8%) scale(1.15); } }
+.l-mail-avatar { display: grid; place-items: center; }
+.l-mail-avatar .l-logo-ring { width: 16px; height: 16px; border-width: 2.5px; }
+
+/* ---------- Capability cards: icon pops out of the glass ---------- */
+.l-cap { height: 100%; }
+.l-cap-icon { transition: transform 0.5s var(--e-big), box-shadow 0.4s, background 0.4s, color 0.3s; transform: translateZ(0); }
+.l-cap:hover .l-cap-icon { transform: translateZ(40px) rotate(-8deg) scale(1.08); background: rgba(139, 92, 246, 0.42); box-shadow: 0 14px 34px rgba(139, 92, 246, 0.5); color: #fff; }
+.l-cap h3 { transition: transform 0.5s var(--e-ui); }
+.l-cap:hover h3 { transform: translateZ(24px); }
+.l-cap-tags span { transition: transform 0.4s var(--e-ui), border-color 0.3s; }
+.l-cap:hover .l-cap-tags span { border-color: rgba(167, 139, 250, 0.4); transform: translateY(-3px); }
+.l-cap:hover .l-cap-tags span:nth-child(2) { transition-delay: 0.05s; }
+.l-cap:hover .l-cap-tags span:nth-child(3) { transition-delay: 0.1s; }
+.l-checks li { transition: transform 0.35s var(--e-ui); }
+.l-checks li:hover { transform: translateX(6px); }
+
+/* ---------- CTA grows as it arrives ---------- */
+.l-cta { transform: scale(var(--cta-s, 1)); transition: transform 0.2s linear; }
+
+/* ---------- Footer links ---------- */
+.l-foot-cols a { transition: color 0.25s, transform 0.35s var(--e-ui); width: fit-content; }
+.l-foot-cols a:hover { color: #fff; transform: translateX(5px); text-decoration: none; }
+.l-footer-end { height: 0; }
+
+/* ---------- THE LOOP bands ---------- */
+.l-bands { position: relative; margin-top: 90px; padding-bottom: 28px; overflow: hidden; }
+.l-band { overflow: hidden; white-space: nowrap; user-select: none; }
+.l-band-track { display: flex; width: max-content; will-change: transform; }
+.l-band-outline { margin-bottom: 0.1em; transform: rotate(-2deg); }
+.l-band-outline span {
+  display: inline-flex; align-items: center; gap: 0.35em; padding-right: 0.35em;
+  font: 800 clamp(44px, 6vw, 92px) / 1.05 Inter, sans-serif; letter-spacing: -0.04em;
+  color: transparent; -webkit-text-stroke: 1.2px rgba(221, 214, 254, 0.55);
+}
+.l-band-outline span:nth-child(4n + 2) { color: rgba(139, 92, 246, 0.9); -webkit-text-stroke: 0; }
+.l-band-outline i { font-style: normal; color: #ec4899; -webkit-text-stroke: 0; font-size: 0.55em; }
+.l-band-main span {
+  display: inline-flex; align-items: center; gap: 0.12em; padding-right: 0.18em;
+  font-weight: 800; letter-spacing: -0.075em; line-height: 0.9;
+  font-size: min(26vw, 380px); color: #f5f3ff;
+  filter: url(#glass-type);
+}
+.l-band-ring {
+  display: inline-block; width: 0.62em; height: 0.62em; border-radius: 50%; flex: none;
+  border: 0.11em solid #fff; border-right-color: #8b5cf6; border-bottom-color: rgba(236, 72, 153, 0.9);
+  animation: spin 3.2s linear infinite;
+  box-shadow: 0 0 60px rgba(139, 92, 246, 0.35);
+}
+.l-bands::after { /* fade the bottom of the giant word into the night */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 45%; pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--night) 92%);
+}
+
+/* Reduced motion (explicit off): bands rest, ring still, no tilt */
+:root[data-motion='reduced'] .landing .l-band-ring,
+:root[data-motion='reduced'] .landing .l-btn-accent,
+:root[data-motion='reduced'] .landing .l-badge::after,
+:root[data-motion='reduced'] .landing .l-mail-visual::before { animation: none !important; }
+:root[data-motion='reduced'] [data-tilt] { transform: none; }
+:root[data-motion='reduced'] .landing .l-mail { transform: rotate(-1.2deg); opacity: 1 !important; }
+
+@media (max-width: 720px) {
+  .l-bands { margin-top: 64px; }
+  .l-band-outline span { font-size: 40px; }
+  .l-step::after, .l-step + .l-step::after { left: 0; }
+  .l-steps-line { display: none; }
+}
+
+/* Auth chips with icons */
+.auth-steps span { display: inline-flex; align-items: center; gap: 10px; transition: transform 0.35s var(--e-ui), border-color 0.3s; }
+.auth-steps span:hover { transform: translateX(6px); border-color: rgba(167, 139, 250, 0.45); }
+.auth-steps .icon { color: #c4b5fd; }
+
+
+/* =====================================================================
+   Performance pass — everything below keeps scrolling at 60fps
+   ===================================================================== */
+
+/* Aurora: pre-softened radial gradients (no live blur filter, no blend modes).
+   Only `transform` animates, which the GPU composites without repainting. */
+.aurora { contain: strict; }
+.aurora .blob {
+  filter: none !important; mix-blend-mode: normal !important; opacity: 1 !important;
+  background: radial-gradient(closest-side, var(--c) 0%, var(--c2) 45%, transparent 100%) !important;
+  will-change: transform; backface-visibility: hidden;
+}
+.aurora-hero .b1 { --c: rgba(109, 40, 217, 0.85); --c2: rgba(91, 33, 182, 0.4); width: 70vw; height: 70vw; left: -22vw; top: -28vw; }
+.aurora-hero .b2 { --c: rgba(190, 24, 93, 0.6); --c2: rgba(190, 24, 93, 0.22); width: 60vw; height: 60vw; right: -22vw; top: -14vw; }
+.aurora-hero .b3 { --c: rgba(29, 78, 216, 0.6); --c2: rgba(29, 78, 216, 0.2); width: 56vw; height: 56vw; left: 22vw; bottom: -34vw; }
+.aurora-hero .b4 { --c: rgba(124, 58, 237, 0.4); --c2: rgba(124, 58, 237, 0.12); width: 34vw; height: 34vw; left: 52vw; top: 24vh; }
+.aurora-cta .b1 { --c: rgba(109, 40, 217, 0.9); --c2: rgba(109, 40, 217, 0.4); width: 90%; height: 190%; left: -25%; top: -60%; }
+.aurora-cta .b2 { --c: rgba(219, 39, 119, 0.7); --c2: rgba(219, 39, 119, 0.25); width: 75%; height: 170%; right: -25%; bottom: -70%; }
+.aurora .horizon { will-change: auto; }
+.aurora .grain { mix-blend-mode: normal !important; opacity: 0.07 !important; }
+
+/* Pause everything in the hero once it is scrolled away */
+.landing.hero-off .feed-col,
+.landing.hero-off .l-hero .blob,
+.landing.hero-off .l-badge::after,
+.landing.hero-off .l-scroll-hint span,
+.landing.hero-off .l-logo-ring { animation-play-state: paused; }
+
+/* Cheaper glass: same frosted look, a third of the blur cost */
+.landing .glass { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+/* No constantly-repainting gradients: animate the button gradient only while hovered */
+.l-btn-accent { animation: none; }
+.l-btn-accent:hover { animation: gradShift 2.4s ease-in-out infinite; }
+
+/* Giant text: no SVG filter (it re-rasterised every frame) and no huge glow blur */
+.l-band-main span { filter: none; text-shadow: none; }
+.l-band-ring { box-shadow: none; }
+.pillword { text-shadow: none; }
+.l-band-track, .l-marquee-track { backface-visibility: hidden; }
+
+/* Hero: one compositor layer; tilt layers only while hovered */
+.l-hero-inner { will-change: transform; }
+[data-tilt] { will-change: auto; }
+[data-tilt]:hover { will-change: transform; }
+.l-mail, .l-mail.in { transition: transform 0.12s linear, box-shadow 0.4s; will-change: transform, opacity; }
+
+/* Footage: real video now — the aurora tints its edges instead of covering it */
+.l-hero-video { z-index: -3; filter: none; object-position: 60% 50%; }
+.l-hero .aurora { z-index: -2; opacity: 0.6; }
+.l-hero::before { /* readability: darken the centre band where the wordmark and headline sit */
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 55% at 50% 45%, rgba(7, 6, 13, 0.55), transparent 75%);
+}
+.l-cta-video { z-index: -2; opacity: 1; }
+.l-cta .aurora { opacity: 0.55; }
+
+/* Short screens (laptops ~900px tall): scale the hero by height too */
+.pillword { font-size: clamp(84px, min(16.5vw, 26vh), 236px); }
+.l-tagline { font-size: clamp(28px, min(4.2vw, 6.4vh), 58px); margin-top: min(34px, 3.2vh); }
+.l-badge { margin-bottom: min(28px, 2.6vh); }
+.l-ctas { margin-top: min(34px, 3.4vh); }
+.l-stats { margin-top: min(56px, 4.8vh); }
+.l-hero { padding-top: max(96px, 11vh); padding-bottom: max(56px, 7vh); }
+@media (max-height: 960px) { .l-scroll-hint { display: none; } }
+@media (max-width: 720px) { .pillword { font-size: 22vw; } .l-tagline { font-size: 34px; } }
+
+/* Reduced motion (explicit off) also stops the aurora drift */
+:root[data-motion='reduced'] .aurora .blob { animation: none !important; }
+
+/* Sign-in / sign-up: slow silk footage behind the glass card */
+.auth-video { position: fixed; z-index: -2; }
+.auth-page .aurora { opacity: 0.45; }
+.auth-page::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(7, 6, 13, 0.7), rgba(7, 6, 13, 0.25)); }
+
+/* Scroll reveals: slide + fade only. Blurring large text while the page scrolls was the main source of first-scroll jank. */
+[data-reveal] { filter: none !important; transform: translateY(26px); transition-property: opacity, transform; transition-duration: 0.9s; }
+[data-reveal].in { transform: none; }
+.l-band, .l-marquee { contain: layout paint; }
+
+/* CTA: static size (scaling a clipped container with live video was expensive); hero: no parallax layer */
+.l-cta { transform: none !important; }
+.l-hero-inner { will-change: auto; }
+
+/* Hero glass over live video: tinted (no live blur) so it does not re-blur every video frame while scrolling */
+.l-hero .glass {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  background:
+    radial-gradient(260px circle at var(--mx, -500px) var(--my, -500px), rgba(255, 255, 255, 0.12), transparent 62%),
+    linear-gradient(180deg, rgba(24, 18, 46, 0.62), rgba(14, 10, 30, 0.5));
+}
+
+/* Real brand marks in feed cards, marquee chips and the inbox mock */
+.fc-plat { display: inline-grid; place-items: center; }
+.fc-plat .brand-logo { width: 1em; height: 1em; }
+.fc-plat.x .brand-logo { width: 0.88em; height: 0.88em; }
+.fc-plat.instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.l-mail-post .fc-plat { width: 28px; height: 28px; border-radius: 8px; font-size: 13px; }
+.l-mail-post .fc-plat .brand-logo { width: 14px; height: 14px; }
+.l-mchip b .brand-logo { display: block; }
+.l-mchip.instagram:hover b { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.l-play .icon { margin-left: 2px; }
+.l-mbtn { display: inline-flex; align-items: center; gap: 7px; }
+.l-band-outline i { display: inline-grid; place-items: center; }
+.l-band-outline i .icon { width: 0.5em; height: 0.5em; color: #ec4899; }
