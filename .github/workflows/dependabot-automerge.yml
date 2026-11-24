@@ -1,0 +1,35 @@
+# Auto-merge Dependabot patch and minor updates once CI passes.
+# Major version bumps are left for you to review.
+name: Dependabot Auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2
+
+      - name: Enable auto-merge for patch/minor
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge "$PR" --auto --squash --delete-branch
+
+      - name: Flag major bumps
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        run: |
+          gh label create needs-human-review --color B60205 --force >/dev/null
+          gh pr edit "$PR" --add-label needs-human-review

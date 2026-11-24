@@ -1,0 +1,127 @@
+# AI PR Guard + Auto-merge
+#
+# For PRs from AI agents (branch starts with jules/ or codex/, or has the
+# "ai-agent" label):
+#   1. Runs safety checks on the diff (it never runs the PR's code).
+#   2. If they pass, turns on GitHub auto-merge. GitHub then merges ONLY
+#      after the required CI check passes (set in your branch ruleset).
+#   3. If they fail, it turns auto-merge off, adds "needs-human-review",
+#      and comments with the reasons.
+#
+# Uses pull_request_target so this file and its rules always come from
+# main. An AI PR can't edit the guard to let itself through.
+name: AI PR Auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    if: >-
+      github.event.pull_request.draft == false && (
+        startsWith(github.event.pull_request.head.ref, 'jules/') ||
+        startsWith(github.event.pull_request.head.ref, 'codex/') ||
+        contains(github.event.pull_request.labels.*.name, 'ai-agent')
+      )
+    runs-on: ubuntu-latest
+    env:
+      # Optional: add a fine-grained PAT as the AUTOMERGE_TOKEN secret so
+      # merges show under your name and trigger CI/deploys on main.
+      GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      MAX_CHANGED_LINES: "400"
+    steps:
+      - name: Turn off auto-merge until this run re-checks the PR
+        run: gh pr merge "$PR" --disable-auto || true
+
+      - name: Check out main (trusted code only)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - name: Fetch PR commits (diffed only, never executed)
+        run: git fetch --no-tags origin "pull/${PR}/head:pr-head"
+
+      - name: Safety checks
+        id: checks
+        run: |
+          set -uo pipefail
+          RANGE="${BASE_SHA}...pr-head"
+          files=$(git diff --name-only "$RANGE")
+          reasons=""
+          add() { reasons="${reasons}- $1"$'\n'; }
+
+          echo "Changed files:"; echo "$files"
+
+          # 1. Protected files: workflows, secrets, ownership/licence
+          blocked=$(echo "$files" | grep -E '^\.github/|(^|/)\.env|\.pem$|\.key$|(^|/)secrets?/|(^|/)CODEOWNERS$|^LICENSE' || true)
+          [ -n "$blocked" ] && add "Touches protected files: $(echo $blocked | tr '\n' ' ')"
+
+          # 2. Dependency changes go to a human (Dependabot handles routine bumps)
+          deps=$(echo "$files" | grep -E '(^|/)(package\.json|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|requirements[^/]*\.txt|pyproject\.toml|poetry\.lock|Pipfile(\.lock)?|go\.(mod|sum)|Cargo\.(toml|lock))$' || true)
+          [ -n "$deps" ] && add "Changes dependencies: $(echo $deps | tr '\n' ' ')"
+
+          # 3. Never delete tests
+          deleted_tests=$(git diff --diff-filter=D --name-only "$RANGE" | grep -Ei '(^|/)(tests?|__tests__|spec)/|[._-](test|spec)\.' || true)
+          [ -n "$deleted_tests" ] && add "Deletes test files: $(echo $deleted_tests | tr '\n' ' ')"
+
+          # 4. Keep PRs small enough to be safe
+          changed=$(git diff --numstat "$RANGE" | awk '{a+=$1; d+=$2} END {print a+d+0}')
+          echo "Lines changed: $changed"
+          [ "$changed" -gt "$MAX_CHANGED_LINES" ] && add "Too large: $changed lines changed (limit $MAX_CHANGED_LINES)"
+
+          # 5. Must be a real change, not whitespace or formatting only
+          if git diff --quiet -w --ignore-blank-lines "$RANGE"; then
+            add "Only whitespace or blank-line changes"
+          fi
+
+          # 6. No leftover merge-conflict markers
+          if git diff "$RANGE" | grep -qE '^\+(<<<<<<< |>>>>>>> |=======$)'; then
+            add "Contains merge-conflict markers"
+          fi
+
+          # 7. No obvious secrets added
+          if git diff "$RANGE" | grep -qE '^\+.*(AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{32,})'; then
+            add "Looks like it adds a secret or API key"
+          fi
+
+          # 8. Must not shrink the codebase into nothing new: block pure deletions
+          added=$(git diff --numstat "$RANGE" | awk '{a+=$1} END {print a+0}')
+          [ "$added" -eq 0 ] && add "Only removes code, adds nothing"
+
+          if [ -n "$reasons" ]; then
+            { echo "reasons<<EOF"; echo "$reasons"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Blocked → flag for human review
+        if: steps.checks.outputs.passed == 'false'
+        env:
+          REASONS: ${{ steps.checks.outputs.reasons }}
+        run: |
+          gh label create needs-human-review --color B60205 --force >/dev/null
+          gh pr edit "$PR" --add-label needs-human-review
+          printf '🛑 **Auto-merge blocked.** This AI PR needs a manual review:\n\n%s\n' "$REASONS" > body.md
+          gh pr comment "$PR" --body-file body.md
+          exit 1
+
+      - name: Passed → enable auto-merge (waits for CI)
+        if: steps.checks.outputs.passed == 'true'
+        run: |
+          gh pr edit "$PR" --remove-label needs-human-review || true
+          gh pr merge "$PR" --auto --squash --delete-branch
+          gh pr comment "$PR" --body "✅ Safety checks passed. Auto-merge is on: this merges as soon as CI is green."
