@@ -33,3 +33,22 @@ jobs:
         run: |
           gh label create needs-human-review --color B60205 --force >/dev/null
           gh pr edit "$PR" --add-label needs-human-review
+
+      # Python range updates ("update X requirement from <2,>=1.0 to >=1.2.4,<2")
+      # come with no update type, so compare the major of the minimum versions.
+      - name: Python range updates → merge same-major, flag the rest
+        if: steps.meta.outputs.update-type == ''
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          from_part="${TITLE#* from }"; from_part="${from_part%% to *}"
+          to_part="${TITLE##* to }"
+          old=$(grep -oE '>=v?[0-9]+' <<<"$from_part" | head -1 | tr -dc '0-9')
+          new=$(grep -oE '>=v?[0-9]+' <<<"$to_part" | head -1 | tr -dc '0-9')
+          echo "minimum major: $old -> $new"
+          if [ -n "$old" ] && [ "$old" = "$new" ]; then
+            gh pr merge "$PR" --auto --squash --delete-branch
+          else
+            gh label create needs-human-review --color B60205 --force >/dev/null
+            gh pr edit "$PR" --add-label needs-human-review
+          fi
