@@ -16,13 +16,14 @@ from ..security import random_token
 from . import jobs
 from .notify import send_approval_email, send_published_email
 from .serialize import list_media, media_url
+from .targets import select_connections
 
 log = logging.getLogger("loop.posts")
 
 
 def resolve_targets(db: Session, user_id: int, connection_ids: list[int] | None) -> tuple[list[int], list[str]]:
     conns = db.execute(select(Connection.id, Connection.platform).where(Connection.user_id == user_id)).all()
-    chosen = [c for c in conns if c.id in connection_ids] if connection_ids else conns
+    chosen = select_connections(conns, connection_ids)
     present = {c.platform for c in chosen}
     # With no accounts connected yet, still draft for every platform so the user can preview.
     return [c.id for c in chosen], [p for p in PLATFORMS if p in present] if present else list(PLATFORMS)

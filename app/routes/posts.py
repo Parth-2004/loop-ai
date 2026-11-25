@@ -62,8 +62,11 @@ def get_post(pid: int, uid: int = Depends(current_user_id), db: Session = Depend
 @router.post("", status_code=202)
 def new_post(body: dict = Body(default_factory=dict), uid: int = Depends(current_user_id), db: Session = Depends(get_db)):
     """Generate a brand-new post on demand."""
+    connection_ids = body.get("connection_ids")
+    if connection_ids is not None:
+        connection_ids = [int(c) for c in connection_ids]
     post = create_post(db, uid, topic_hint=body.get("topic") or None, brief=body.get("brief") or None,
-                       connection_ids=[int(c) for c in body.get("connection_ids") or []], media_type=body.get("media_type") or "auto",
+                       connection_ids=connection_ids, media_type=body.get("media_type") or "auto",
                        scheduled_for=_parse_dt(body.get("scheduled_for")), require_approval=body.get("require_approval", True) is not False)
     run_generation(post.id)
     return {"post": post_dict(db, post)}
