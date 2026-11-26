@@ -14,6 +14,7 @@ from .config import ROOT, settings
 from .db import get_db, init_db
 from .emailer import email_configured
 from .models import Media
+from .media_ranges import parse_byte_range
 from .routes import approvals, auth, connections, posts, profile, schedules
 from .worker import start_worker, stop_worker
 
@@ -79,12 +80,15 @@ def media(file: str, request: Request, db: Session = Depends(get_db)):
     if not m:
         raise HTTPException(404, "Not found")
     headers = {"Cache-Control": "public, max-age=31536000, immutable", "Accept-Ranges": "bytes"}
-    rng = re.match(r"bytes=(\d*)-(\d*)", request.headers.get("range", ""))
-    if rng:  # range support so videos stream in browsers and are fetchable by Meta
+    range_header = request.headers.get("range")
+    if range_header:  # range support so videos stream in browsers and are fetchable by Meta
         size = len(m.data)
-        start = int(rng.group(1)) if rng.group(1) else 0
-        end = min(int(rng.group(2)), size - 1) if rng.group(2) else size - 1
+        try:
+            start, end = parse_byte_range(range_header, size)
+        except ValueError:
+            raise HTTPException(416, "Range not satisfiable", headers={"Content-Range": f"bytes */{size}"})
         headers["Content-Range"] = f"bytes {start}-{end}/{size}"
+        headers["Content-Length"] = str(end - start + 1)
         return Response(m.data[start : end + 1], status_code=206, media_type=m.mime, headers=headers)
     return Response(m.data, media_type=m.mime, headers=headers)
 
