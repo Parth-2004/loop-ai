@@ -7,7 +7,7 @@ Loop AI learns how you or your company write, then creates posts with images and
 Nothing is published until you approve it by email. Reply with changes and the AI rewrites the post and sends you
 a new version.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Parth-2004/loop-ai)
+**Live app:** [loop-ai-ayth.onrender.com](https://loop-ai-ayth.onrender.com)
 
 ```
  Schedule slot ──> Gemini drafts copy per platform + an image (Gemini / Imagen) or a video (Veo)
@@ -65,41 +65,6 @@ loop-ai/
 ```
 
 Interactive API docs are served at **`/api/docs`**.
-
-## Deploy to Render
-
-1. Click **Deploy to Render** above, or in the Render dashboard choose **New > Blueprint** and pick this repository.
-   Render reads `render.yaml` and creates:
-   - **loop-ai**, a Docker web service that builds the dashboard and runs FastAPI
-   - **loop-ai-db**, a PostgreSQL database, wired in through `DATABASE_URL`
-   - a generated `JWT_SECRET` and `ENCRYPTION_KEY`
-2. Fill in the secrets Render asks for. Only `GEMINI_API_KEY` is required to start; add `RESEND_API_KEY` and `EMAIL_FROM`
-   for approval emails, and the social app keys as you get them. Leave the rest blank.
-3. Deploy. The tables are created on first start, and `/api/health` reports whether Gemini and email are configured.
-4. Register these OAuth redirect URIs with each platform, using your Render URL:
-   - X: `https://YOUR-APP.onrender.com/api/oauth/x/callback`
-   - LinkedIn: `https://YOUR-APP.onrender.com/api/oauth/linkedin/callback`
-   - Meta: `https://YOUR-APP.onrender.com/api/oauth/meta/callback`
-
-`APP_URL` is detected from Render's `RENDER_EXTERNAL_URL`. If you add a custom domain, set `APP_URL` to it.
-Every push to the default branch redeploys automatically.
-
-**Plans and cost.** The blueprint deploys on Render's **free** plans, so it costs nothing. Two limits to know:
-
-- **The free web service sleeps** after 15 minutes without traffic, and the scheduler sleeps with it, so drafts and
-  posts would wait until someone opens the site (the first visit after a sleep takes about a minute). To keep it awake,
-  have a free uptime monitor such as [UptimeRobot](https://uptimerobot.com) or [cron-job.org](https://cron-job.org)
-  request `https://YOUR-APP.onrender.com/api/health` every 10 minutes. One always-on service fits within the free
-  monthly instance hours.
-- **The free database expires 30 days** after it is created; Render emails you before that. To keep your data, upgrade
-  it to `basic-256mb` in the Render dashboard (or in `render.yaml`). Render allows one free database per workspace.
-
-For an always-on paid setup, change the web plan to `starter` and the database plan to `basic-256mb` in `render.yaml`.
-Keep a single instance either way, because the scheduler runs in-process.
-
-**Email on Render.** Render may block outbound SMTP, so use **Resend**. Verify your sending domain there and set
-`EMAIL_FROM` to an address on it. Without an email provider, approval emails, including the review link, are
-written to the service log.
 
 ## Run locally
 
