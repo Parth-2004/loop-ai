@@ -13,12 +13,15 @@ router = APIRouter(prefix="/api/schedules", tags=["schedules"])
 
 
 def _parse(body: dict) -> dict:
+    days_of_week = body.get("days_of_week")
+    if days_of_week is None:
+        days_of_week = [1]
     s = {
         "name": (body.get("name") or "").strip() or "My schedule",
         "frequency": body.get("frequency") or "daily",
         "every_hours": int(body.get("every_hours") or 1),
         "time_of_day": body.get("time_of_day") or "09:00",
-        "days_of_week": [int(d) for d in (body.get("days_of_week") or [1])],
+        "days_of_week": [int(d) for d in days_of_week],
         "timezone": body.get("timezone") or "UTC",
         "connection_ids": [int(c) for c in (body.get("connection_ids") or [])],
         "content_brief": body.get("content_brief") or None,

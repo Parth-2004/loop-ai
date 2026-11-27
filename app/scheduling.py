@@ -18,8 +18,12 @@ def build_cron(frequency: str, every_hours=1, time_of_day="09:00", days_of_week=
     if frequency == "daily":
         return f"{m} {h} * * *"
     if frequency == "weekly":
-        days = sorted({int(d) for d in (days_of_week or [1])})
-        return f"{m} {h} * * {','.join(map(str, days))}"
+        days = [1] if days_of_week is None else sorted({int(d) for d in days_of_week})
+        if not days:
+            raise ValueError("Choose at least one day of the week")
+        if any(d < 0 or d > 6 for d in days):
+            raise ValueError("Days of week must be between 0 and 6")
+        return f"{m} {h} * * {','.join(map(str, days))}
     if frequency == "custom":
         validate_cron(cron)
         return cron.strip()
