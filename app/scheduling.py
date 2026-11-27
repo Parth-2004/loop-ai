@@ -23,7 +23,7 @@ def build_cron(frequency: str, every_hours=1, time_of_day="09:00", days_of_week=
             raise ValueError("Choose at least one day of the week")
         if any(d < 0 or d > 6 for d in days):
             raise ValueError("Days of week must be between 0 and 6")
-        return f"{m} {h} * * {','.join(map(str, days))}
+        return f"{m} {h} * * {','.join(map(str, days))}"
     if frequency == "custom":
         validate_cron(cron)
         return cron.strip()
