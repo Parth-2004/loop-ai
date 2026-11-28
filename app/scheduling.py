@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import re
 from zoneinfo import ZoneInfo
 
 from croniter import croniter
@@ -6,12 +7,17 @@ from croniter import croniter
 DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 
+def _parse_time_of_day(value) -> tuple[int, int]:
+    value = str(value or "09:00")
+    if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+        raise ValueError("Time of day must be in 24-hour HH:MM format")
+    h, m = map(int, value.split(":"))
+    return h, m
+
+
 def build_cron(frequency: str, every_hours=1, time_of_day="09:00", days_of_week=None, cron=None) -> str:
     """Turns the UI's friendly frequency fields into a cron expression."""
-    try:
-        h, m = (int(x or 0) for x in str(time_of_day or "09:00").split(":")[:2])
-    except ValueError:
-        h, m = 9, 0
+    h, m = _parse_time_of_day(time_of_day)
     if frequency == "hourly":
         n = min(max(int(every_hours or 1), 1), 23)
         return f"{m} * * * *" if n == 1 else f"{m} */{n} * * *"
