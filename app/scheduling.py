@@ -41,7 +41,7 @@ def zone(tz: str | None) -> ZoneInfo:
     try:
         return ZoneInfo(tz or "UTC")
     except Exception:
-        raise ValueError(f'Unknown timezone "{tz}')
+        raise ValueError(f'Unknown timezone "{tz}"')
 
 
 def next_run(cron: str, tz: str = "UTC", after: datetime | None = None) -> datetime:
